@@ -1,0 +1,32 @@
+[package]
+name = "jarvis"
+version = "0.0.1"
+authors = ["Cole Reynolds <cpjreynolds@gmail.com>"]
+description = "Just A Rather Very Intelligent System"
+documentation = ""
+homepage = ""
+repository = ""
+readme = "README.md"
+license = "MIT"
+
+[lib]
+name = "jarvis"
+path = "src/jarvis/lib.rs"
+
+[[bin]]
+name = "jarvis"
+
+[dependencies]
+#term = "*"
+#image = "*"
+docopt = "*"
+rustc-serialize = "*"
+log = "*"
+env_logger = "*"
+toml = "*"
+
+[profile.release]
+lto = true
+
+[profile.bench]
+lto = true
