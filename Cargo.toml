@@ -3,9 +3,9 @@ name = "jarvis"
 version = "0.0.2"
 authors = ["Cole Reynolds <cpjreynolds@gmail.com>"]
 description = "Just A Rather Very Intelligent System"
-documentation = ""
-homepage = ""
-repository = ""
+documentation = "https://github.com/cpjreynolds/jarvis.git"
+homepage = "https://github.com/cpjreynolds/jarvis.git"
+repository = "https://github.com/cpjreynolds/jarvis.git"
 readme = "README.md"
 license = "MIT"
 
@@ -17,8 +17,8 @@ path = "src/jarvis/lib.rs"
 name = "jarvis"
 
 [dependencies]
-#term = "*"
-#image = "*"
+term = "*"
+image = "*"
 docopt = "*"
 rustc-serialize = "*"
 log = "*"
