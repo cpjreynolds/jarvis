@@ -6,13 +6,17 @@ extern crate rustc_serialize;
 extern crate toml;
 extern crate docopt;
 
-pub mod util;
-pub mod process;
-
 use std::env;
 
 use rustc_serialize::Decodable;
 use docopt::Docopt;
+
+pub mod process;
+pub mod util;
+
+use process::{
+    Process,
+};
 
 use util::{
     Error,
@@ -26,7 +30,7 @@ use util::{
 //
 // Each executable command has an `execute()` function, which serves as its main entry point. The
 // execute function is passed an environment, configuration, and command line arguments. The
-// function should return a `Result` 
+// function should return a `Result`
 
 // Wraps the function in an execution environment and calls it.
 pub fn execute_main<T, V>(exec: fn(T) -> Result<V, Error>,
