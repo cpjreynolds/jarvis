@@ -10,6 +10,7 @@ use std::env;
 mod bar;
 mod backlight;
 mod keylight;
+mod sound;
 mod help;
 
 use jarvis::util::Error;
@@ -25,6 +26,7 @@ Usage:
 Options:
     -h, --help      Display this message
     -v, --version   Print version info and exit
+    --list          List commands
 
 Commands:
     bar             Create a new bar
@@ -37,6 +39,7 @@ See 'jarvis help <command>' for more information on a specific command.
 macro_rules! each_subcommand{ ($mac:ident) => ({
     $mac!(backlight);
     $mac!(bar);
+    $mac!(sound);
     $mac!(keylight);
     $mac!(help);
 }) }
@@ -46,6 +49,7 @@ macro_rules! each_subcommand{ ($mac:ident) => ({
 pub struct Args {
     arg_command: String,
     arg_args: Vec<String>,
+    flag_list: bool,
 }
 
 fn main() {
@@ -55,6 +59,15 @@ fn main() {
 }
 
 pub fn execute(args: Args) -> Result<(), Error> {
+    if args.flag_list {
+        println!("Commands:");
+        macro_rules! print_command{ ($cmd:ident) => ({
+            println!("    {}", stringify!($cmd));
+        }) }
+        each_subcommand!(print_command);
+        return Ok(())
+    }
+
     let argv = match &args.arg_command[..] {
         "" | "help" if args.arg_args.is_empty() => {
             let ref argv = ["jarvis", "-h"];
