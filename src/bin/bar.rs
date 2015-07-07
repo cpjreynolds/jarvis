@@ -1,7 +1,7 @@
 use jarvis::util::Error;
 
 pub const USAGE: &'static str = "
-Control and configure status bars
+Status bar control
 
 Usage:
     jarvis bar [options]
