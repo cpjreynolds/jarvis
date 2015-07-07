@@ -18,12 +18,12 @@ name = "jarvis"
 
 [dependencies]
 term = "*"
-image = "*"
+#image = "*"
 docopt = "*"
 rustc-serialize = "*"
 log = "*"
 env_logger = "*"
-toml = "*"
+#toml = "*"
 
 [profile.release]
 lto = true

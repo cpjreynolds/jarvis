@@ -8,7 +8,7 @@ Usage:
 
 Options:
     -t, --test      Test command
-    -h, --help      Display this message
+    -h, --help      Print this message
 ";
 
 #[derive(Debug, RustcDecodable)]

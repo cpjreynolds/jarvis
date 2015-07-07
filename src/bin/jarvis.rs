@@ -5,9 +5,12 @@ extern crate docopt;
 extern crate log;
 extern crate env_logger;
 
+use std::env;
+
 mod bar;
 mod backlight;
 mod keylight;
+mod help;
 
 use jarvis::util::Error;
 use jarvis::process::Process;
@@ -31,6 +34,13 @@ Commands:
 See 'jarvis help <command>' for more information on a specific command.
 ";
 
+macro_rules! each_subcommand{ ($mac:ident) => ({
+    $mac!(backlight);
+    $mac!(bar);
+    $mac!(keylight);
+    $mac!(help);
+}) }
+
 
 #[derive(Debug, RustcDecodable)]
 pub struct Args {
@@ -45,20 +55,32 @@ fn main() {
 }
 
 pub fn execute(args: Args) -> Result<(), Error> {
-    match &args.arg_command[..] {
-        "bar" => {
-            let process = Process::new(bar::execute, bar::USAGE);
-            jarvis::execute(process);
-        },
+    let argv = match &args.arg_command[..] {
         "" | "help" if args.arg_args.is_empty() => {
-            let args = &["jarvis", "-h"];
-            let process = Process::new(execute, USAGE).argv(args);
+            let ref argv = ["jarvis", "-h"];
+            let process = Process::new(execute, USAGE).argv(argv);
             jarvis::execute(process);
             return Ok(())
         },
-        _ => {
-            println!("No such subcommand");
+        "help" if args.arg_args[0] == "-h" ||
+                  args.arg_args[0] == "--help" => {
+            vec!["jarvis".to_string(), "help".to_string(), "-h".to_string()]
         },
-    }
-    Ok(())
+        "help" => {
+            vec!["jarvis".to_string(), args.arg_args[0].clone(), "-h".to_string()]
+        },
+        _ => {
+            env::args().collect()
+        },
+    };
+
+    macro_rules! cmd{ ($name:ident) => (
+        if argv[1] == stringify!($name) {
+            let process = Process::new($name::execute, $name::USAGE).argv(argv);
+            jarvis::execute(process);
+            return Ok(())
+        }
+    ) }
+    each_subcommand!(cmd);
+    Err(Error::new("No such subcommand"))
 }

@@ -1,5 +1,4 @@
 use std::env;
-use std::marker::PhantomData;
 
 use docopt::Docopt;
 use rustc_serialize::{
@@ -12,37 +11,31 @@ use util::{
     Error,
 };
 
-pub struct Process<F, A, V>
-    where F: Fn(A) -> Result<V, Error>,
-          A: Decodable,
+pub struct Process<A, V>
+    where A: Decodable,
           V: Encodable,
 {
-    exec: F,
+    exec: fn(A) -> Result<V, Error>,
     argv: Option<Vec<String>>, // Optional, manually specified argv. Will use env::args otherwise.
     usage: String,
     options_first: bool,
-    a_type: PhantomData<A>,
-    v_type: PhantomData<V>,
 }
 
-impl<F, A, V> Process<F, A, V>
-    where F: Fn(A) -> Result<V, Error>,
-          A: Decodable,
+impl<A, V> Process<A, V>
+    where A: Decodable,
           V: Encodable,
 {
-    pub fn new(exec: F, usage: &str) -> Process<F, A, V> {
+    pub fn new(exec: fn(A) -> Result<V, Error>, usage: &str) -> Process<A, V> {
         Process {
             exec: exec,
             argv: None,
             usage: String::from(usage),
             options_first: false,
-            a_type: PhantomData,
-            v_type: PhantomData,
         }
     }
 
     // Sets the argv to use to construct the process' arguments.
-    pub fn argv<I, S>(mut self, argv: I) -> Process<F, A, V>
+    pub fn argv<I, S>(mut self, argv: I) -> Process<A, V>
         where I: IntoIterator<Item=S>,
               S: ToString
     {
@@ -52,12 +45,13 @@ impl<F, A, V> Process<F, A, V>
         self
     }
 
-    pub fn options_first(mut self, optf: bool) -> Process<F, A, V> {
+    pub fn options_first(mut self, optf: bool) -> Process<A, V> {
         self.options_first = optf;
         self
     }
 
-    pub fn execute(self) -> ProcessResult<V> {
+    pub fn execute(self) -> ProcessResult<V>
+    {
         let args: A = if let Some(ref argv) = self.argv {
             decode_args(&self.usage, argv, self.options_first)
         } else {
@@ -83,13 +77,10 @@ impl<V> ProcessResult<V>
         }
     }
 
-    pub fn handle(self) {
-        match self.result {
-            Ok(_) => {},
-            Err(e) => {
-                panic!("{}", e);
-            }
-        }
+    pub fn handle<H>(self, h: H)
+        where H: FnOnce(Result<V, Error>),
+    {
+        h(self.result);
     }
 }
 
