@@ -18,15 +18,28 @@ use process::{
     Process,
 };
 
+use util::{
+    Error,
+};
+
 pub fn execute<A, V>(process: Process<A, V>)
     where A: Decodable,
           V: Encodable,
 {
     let result = process.execute();
     result.handle(|r| {
-        r.unwrap();
+        match r {
+            Ok(_) => {},
+            Err(e) => { handle_error(e) },
+        }
     });
 }
+
+fn handle_error(e: Error) -> ! {
+    println!("{}", e);
+    ::std::process::exit(1);
+}
+
 
 // Cargo defines this environment variable at compile time from the crate's manifest.
 fn version() -> String {
