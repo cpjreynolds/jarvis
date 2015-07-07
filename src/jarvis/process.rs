@@ -1,4 +1,5 @@
 use std::env;
+use std::marker::PhantomData;
 
 use docopt::Docopt;
 use rustc_serialize::{
@@ -13,70 +14,82 @@ use util::{
 
 pub struct Process<F, A, V>
     where F: Fn(A) -> Result<V, Error>,
-          A: Decodable + Clone,
-          V: Encodable
+          A: Decodable,
+          V: Encodable,
 {
     exec: F,
-    args: Option<A>, // exec function specific argument structure.
-    argv: Option<Vec<String>>, // Optional, manually specified argv.
+    argv: Option<Vec<String>>, // Optional, manually specified argv. Will use env::args otherwise.
     usage: String,
     options_first: bool,
+    a_type: PhantomData<A>,
+    v_type: PhantomData<V>,
 }
 
 impl<F, A, V> Process<F, A, V>
     where F: Fn(A) -> Result<V, Error>,
-          A: Decodable + Clone,
-          V: Encodable
+          A: Decodable,
+          V: Encodable,
 {
     pub fn new(exec: F, usage: &str) -> Process<F, A, V> {
         Process {
             exec: exec,
-            args: None,
             argv: None,
             usage: String::from(usage),
             options_first: false,
+            a_type: PhantomData,
+            v_type: PhantomData,
         }
     }
 
     // Sets the argv to use to construct the process' arguments.
-    pub fn argv<I, S>(&mut self, argv: Option<I>) -> &mut Process<F, A, V>
+    pub fn argv<I, S>(mut self, argv: I) -> Process<F, A, V>
         where I: IntoIterator<Item=S>,
               S: ToString
     {
-        self.args = None; // Invalidate any cached Args structure.
-        self.argv = if let Some(argv) = argv {
-            Some(argv.into_iter()
-                     .map(|s| s.to_string())
-                     .collect())
-        } else {
-            None
-        };
+        self.argv = Some(argv.into_iter()
+                             .map(|s| s.to_string())
+                             .collect());
         self
     }
 
-    pub fn options_first(&mut self, optf: bool) -> &mut Process<F, A, V> {
+    pub fn options_first(mut self, optf: bool) -> Process<F, A, V> {
         self.options_first = optf;
         self
     }
 
-    pub fn execute(&mut self) -> Result<V, Error> {
-        // If there is a cached Args structure, use it instead of remaking one.
-        let args = if let Some(ref args) = self.args {
-            args.clone()
+    pub fn execute(self) -> ProcessResult<V> {
+        let args: A = if let Some(ref argv) = self.argv {
+            decode_args(&self.usage, argv, self.options_first)
         } else {
-            match self.argv {
-                Some(ref argv) => {
-                    self.args = Some(decode_args(&self.usage, argv, self.options_first));
-                    self.args.clone().unwrap()
-                },
-                None => {
-                    let argv: Vec<String> = env::args().collect();
-                    self.args = Some(decode_args(&self.usage, &argv, self.options_first));
-                    self.args.clone().unwrap()
-                },
-            }
+            let ref argv: Vec<String> = env::args().collect();
+            decode_args(&self.usage, argv, self.options_first)
         };
-        (self.exec)(args)
+        ProcessResult::new((self.exec)(args))
+    }
+}
+
+pub struct ProcessResult<V>
+    where V: Encodable,
+{
+    result: Result<V, Error>,
+}
+
+impl<V> ProcessResult<V>
+    where V: Encodable,
+{
+    fn new(r: Result<V, Error>) -> ProcessResult<V> {
+        ProcessResult {
+            result: r,
+        }
+    }
+
+    pub fn handle(self) {
+        match self.result {
+            Ok(_) => {},
+            Err(e) => {
+                panic!("{}", e);
+            }
+        }
     }
 }
 

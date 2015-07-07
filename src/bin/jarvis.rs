@@ -10,6 +10,7 @@ mod backlight;
 mod keylight;
 
 use jarvis::util::Error;
+use jarvis::process::Process;
 
 pub const USAGE: &'static str = "
 Just A Rather Very Intelligent System
@@ -39,18 +40,20 @@ pub struct Args {
 
 fn main() {
     env_logger::init().unwrap();
-    jarvis::execute_main(execute, USAGE, true);
+    let process = Process::new(execute, USAGE).options_first(true);
+    jarvis::execute(process);
 }
 
 pub fn execute(args: Args) -> Result<(), Error> {
     match &args.arg_command[..] {
         "bar" => {
-            jarvis::execute_main(bar::execute, bar::USAGE, false);
+            let process = Process::new(bar::execute, bar::USAGE);
+            jarvis::execute(process);
         },
         "" | "help" if args.arg_args.is_empty() => {
-            let args = &[String::from("jarvis"), String::from("-h")];
-            let retval = jarvis::call_main(execute, USAGE, args, false);
-            jarvis::handle_process(retval);
+            let args = &["jarvis", "-h"];
+            let process = Process::new(execute, USAGE).argv(args);
+            jarvis::execute(process);
             return Ok(())
         },
         _ => {
