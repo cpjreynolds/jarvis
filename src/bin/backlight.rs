@@ -1,4 +1,8 @@
-use jarvis::util::Error;
+use jarvis::util::{
+    Result,
+    Error,
+};
+
 
 pub const USAGE: &'static str = "
 Backlight control
@@ -16,7 +20,7 @@ pub struct Args {
     flag_test: bool,
 }
 
-pub fn execute(args: Args) -> Result<(), Error> {
+pub fn execute(args: Args) -> Result<()> {
     println!("{:?}", args);
     println!("nothing here yet");
     Ok(())

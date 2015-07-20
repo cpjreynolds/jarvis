@@ -9,6 +9,7 @@ extern crate docopt;
 
 pub mod process;
 pub mod util;
+pub mod ops;
 
 use std::io::prelude::*;
 

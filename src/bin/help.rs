@@ -1,4 +1,5 @@
 use jarvis::util::{
+    Result,
     Error,
 };
 
@@ -18,6 +19,6 @@ Options:
     -h, --help      Print this message
 ";
 
-pub fn execute(_: Args) -> Result<(), Error> {
+pub fn execute(_: Args) -> Result<()> {
     Err(Error::new("Help command should not be executed"))
 }

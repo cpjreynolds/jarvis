@@ -1,16 +1,23 @@
 use std::error::Error as StdError;
 use std::fmt;
+use std::result;
+use std::io;
+use std::num;
+
+pub type Result<T> = result::Result<T, Error>;
 
 #[derive(Debug)]
 pub struct Error {
-    description: String,
+    desc: String,
+    detail: Vec<String>,
     cause: Option<Box<StdError>>,
 }
 
 impl Error {
     pub fn new(desc: &str) -> Error {
         Error {
-            description: String::from(desc),
+            desc: String::from(desc),
+            detail: Vec::new(),
             cause: None,
         }
     }
@@ -18,16 +25,20 @@ impl Error {
     pub fn with_cause<E>(desc: &str, cause: E) -> Error
         where E: StdError + 'static
     {
-        Error {
-            description: String::from(desc),
-            cause: Some(box cause),
-        }
+        let mut err = Error::new(desc);
+        err.add_detail(cause.description());
+        err.cause = Some(box cause);
+        err
+    }
+
+    pub fn add_detail(&mut self, detail: &str) {
+        self.detail.push(String::from(detail));
     }
 }
 
 impl StdError for Error {
     fn description(&self) -> &str {
-        &self.description[..]
+        &self.desc[..]
     }
 
     fn cause(&self) -> Option<&StdError> {
@@ -38,8 +49,20 @@ impl StdError for Error {
     }
 }
 
+impl From<io::Error> for Error {
+    fn from(err: io::Error) -> Error {
+        Error::with_cause("internal I/O error", err)
+    }
+}
+
+impl From<num::ParseIntError> for Error {
+    fn from(err: num::ParseIntError) -> Error {
+        Error::with_cause("integer parse error", err)
+    }
+}
+
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.description)
+        write!(f, "{}", self.desc)
     }
 }

@@ -6,16 +6,15 @@ use rustc_serialize::{
     Encodable,
 };
 
-use super::version;
 use util::{
-    Error,
+    Result,
 };
 
 pub struct Process<A, V>
     where A: Decodable,
           V: Encodable,
 {
-    exec: fn(A) -> Result<V, Error>,
+    exec: fn(A) -> Result<V>,
     argv: Option<Vec<String>>, // Optional, manually specified argv. Will use env::args otherwise.
     usage: String,
     options_first: bool,
@@ -25,7 +24,7 @@ impl<A, V> Process<A, V>
     where A: Decodable,
           V: Encodable,
 {
-    pub fn new(exec: fn(A) -> Result<V, Error>, usage: &str) -> Process<A, V> {
+    pub fn new(exec: fn(A) -> Result<V>, usage: &str) -> Process<A, V> {
         Process {
             exec: exec,
             argv: None,
@@ -65,20 +64,20 @@ impl<A, V> Process<A, V>
 pub struct ProcessResult<V>
     where V: Encodable,
 {
-    result: Result<V, Error>,
+    result: Result<V>,
 }
 
 impl<V> ProcessResult<V>
     where V: Encodable,
 {
-    fn new(r: Result<V, Error>) -> ProcessResult<V> {
+    fn new(r: Result<V>) -> ProcessResult<V> {
         ProcessResult {
             result: r,
         }
     }
 
     pub fn handle<H>(self, h: H)
-        where H: FnOnce(Result<V, Error>),
+        where H: FnOnce(Result<V>),
     {
         h(self.result);
     }
@@ -90,7 +89,7 @@ fn decode_args<A>(usage: &str, argv: &[String], options_first: bool) -> A
     let docopt = Docopt::new(usage).unwrap()
                                    .argv(argv.iter().map(|s| &s[..]))
                                    .help(true)
-                                   .version(Some(version()))
+                                   .version(Some(::version()))
                                    .options_first(options_first);
     docopt.decode().unwrap_or_else(|e| e.exit())
 }

@@ -13,7 +13,10 @@ mod keylight;
 mod sound;
 mod help;
 
-use jarvis::util::Error;
+use jarvis::util::{
+    Result,
+    Error,
+};
 use jarvis::process::Process;
 
 pub const USAGE: &'static str = "
@@ -36,13 +39,15 @@ Commands:
 See 'jarvis help <command>' for more information on a specific command.
 ";
 
-macro_rules! each_subcommand{ ($mac:ident) => ({
-    $mac!(backlight);
-    $mac!(bar);
-    $mac!(sound);
-    $mac!(keylight);
-    $mac!(help);
-}) }
+macro_rules! each_subcommand {
+    ($mac:ident) => (
+        $mac!(backlight);
+        $mac!(bar);
+        $mac!(sound);
+        $mac!(keylight);
+        $mac!(help);
+    );
+}
 
 
 #[derive(Debug, RustcDecodable)]
@@ -58,12 +63,14 @@ fn main() {
     jarvis::execute(process);
 }
 
-pub fn execute(args: Args) -> Result<(), Error> {
+pub fn execute(args: Args) -> Result<()> {
     if args.flag_list {
         println!("Commands:");
-        macro_rules! print_command{ ($cmd:ident) => ({
-            println!("    {}", stringify!($cmd));
-        }) }
+        macro_rules! print_command {
+            ($cmd:ident) => (
+                println!("    {}", stringify!($cmd));
+            );
+        }
         each_subcommand!(print_command);
         return Ok(())
     }
@@ -87,13 +94,15 @@ pub fn execute(args: Args) -> Result<(), Error> {
         },
     };
 
-    macro_rules! cmd{ ($name:ident) => (
-        if argv[1] == stringify!($name) {
-            let process = Process::new($name::execute, $name::USAGE).argv(argv);
-            jarvis::execute(process);
-            return Ok(())
-        }
-    ) }
+    macro_rules! cmd {
+        ($name:ident) => (
+            if argv[1] == stringify!($name) {
+                let process = Process::new($name::execute, $name::USAGE).argv(argv);
+                jarvis::execute(process);
+                return Ok(())
+            }
+        );
+    }
     each_subcommand!(cmd);
     Err(Error::new("No such subcommand"))
 }
